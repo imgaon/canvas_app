@@ -1,17 +1,14 @@
+import 'dart:developer';
+
 import 'package:canvas_app/domain/model/drawing_points_model.dart';
+import 'package:canvas_app/presentation/component/dialog/brush_width_dialog.dart';
+import 'package:canvas_app/presentation/component/dialog/color_picker_dialog.dart';
 import 'package:canvas_app/presentation/component/painter/drawing_painter.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class CanvasWidget extends StatefulWidget {
-  final Color color;
-  final double strokeWidth;
-
   const CanvasWidget({
     super.key,
-    required this.color,
-    required this.strokeWidth,
   });
 
   @override
@@ -22,6 +19,8 @@ class _CanvasWidgetState extends State<CanvasWidget> {
   List<DrawingPointsModel> points = [];
   bool isEraser = false;
   List<bool> items = [false, false];
+  double stroke = 5;
+  Color color = Colors.black;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +28,7 @@ class _CanvasWidgetState extends State<CanvasWidget> {
       alignment: Alignment.bottomCenter,
       children: [
         canvas(),
-        bottomBar(),
+        bottomBar(context),
       ],
     );
   }
@@ -39,12 +38,18 @@ class _CanvasWidgetState extends State<CanvasWidget> {
       onPanUpdate: (details) {
         points.add(DrawingPointsModel(
           points: details.localPosition,
+          paint: Paint()
+            ..color = isEraser ? Colors.white : color
+            ..strokeCap = StrokeCap.round
+            ..strokeWidth = stroke
+            ..style = PaintingStyle.stroke
+            ..isAntiAlias = true,
           isPoint: true,
         ));
         setState(() {});
       },
       onPanEnd: (details) {
-        points.add(DrawingPointsModel(points: Offset.zero, isPoint: false));
+        points.add(DrawingPointsModel(points: Offset.zero, paint: Paint(), isPoint: false));
         setState(() {});
       },
       child: Container(
@@ -52,25 +57,23 @@ class _CanvasWidgetState extends State<CanvasWidget> {
         height: 500,
         decoration: BoxDecoration(
           border: Border.all(width: 2, color: Colors.black),
-          borderRadius: BorderRadius.circular(30),
         ),
         child: CustomPaint(
           painter: DrawingPainter(
-              points: points,
-              color: widget.color,
-              strokeWidth: widget.strokeWidth,
-              isEraser: isEraser),
+            points: points,
+            isEraser: isEraser,
+          ),
           child: Container(),
         ),
       ),
     );
   }
 
-  Widget bottomBar() {
+  Widget bottomBar(BuildContext context) {
     return Container(
-      width: 200,
-      margin: EdgeInsets.only(bottom: 20),
-      padding: EdgeInsets.all(10),
+      width: 240,
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.black26,
         borderRadius: BorderRadius.circular(50),
@@ -83,8 +86,47 @@ class _CanvasWidgetState extends State<CanvasWidget> {
             isSelected: items[0],
             onTap: () {
               selectedItem(0);
-              items[0] ? isEraser = true : isEraser = false;
               setState(() {});
+            },
+          ),
+          const SizedBox(width: 20),
+          iconButton(
+              icon: Icons.colorize,
+              isSelected: items[1],
+              onTap: () {
+                selectedItem(1);
+                setState(() {});
+              }),
+          const SizedBox(width: 20),
+          iconButton(
+            icon: Icons.draw,
+            isSelected: false,
+            onTap: () async {
+              final newStroke = await showBrushDialog(context);
+              if (newStroke != 0) {
+                stroke = newStroke;
+              }
+            },
+          ),
+          const SizedBox(width: 20),
+          iconButton(
+            icon: Icons.delete,
+            isSelected: false,
+            onTap: () {
+              points.clear();
+              setState(() {});
+            },
+          ),
+          const SizedBox(width: 20),
+          iconButton(
+            icon: Icons.palette,
+            isSelected: false,
+            onTap: () async {
+              final Color? newColor = await showColorPicker(context);
+              log(newColor.toString());
+              if (newColor != null) color = newColor;
+
+              log(color.toString());
             },
           ),
         ],
@@ -111,5 +153,7 @@ class _CanvasWidgetState extends State<CanvasWidget> {
         items[i] = i == index;
       }
     }
+
+    items[0] ? isEraser = true : isEraser = false;
   }
 }

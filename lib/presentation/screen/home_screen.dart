@@ -29,13 +29,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-      return Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(20),
           child: Column(
             children: [
-              CanvasWidget(color: Colors.red, strokeWidth: 5,),
+              CanvasWidget(),
             ],
           ),
         ),
