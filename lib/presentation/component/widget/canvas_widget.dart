@@ -21,6 +21,7 @@ class _CanvasWidgetState extends State<CanvasWidget> {
   List<bool> items = [false, false];
   double stroke = 5;
   Color color = Colors.black;
+  bool isDrawing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +37,8 @@ class _CanvasWidgetState extends State<CanvasWidget> {
   Widget canvas() {
     return GestureDetector(
       onPanUpdate: (details) {
+        isDrawing = true;
+
         points.add(DrawingPointsModel(
           points: details.localPosition,
           paint: Paint()
@@ -49,87 +52,93 @@ class _CanvasWidgetState extends State<CanvasWidget> {
         setState(() {});
       },
       onPanEnd: (details) {
+        isDrawing = false;
+
         points.add(DrawingPointsModel(points: Offset.zero, paint: Paint(), isPoint: false));
         setState(() {});
       },
       child: Container(
         width: MediaQuery.sizeOf(context).width,
         height: 500,
-        decoration: BoxDecoration(
-          border: Border.all(width: 2, color: Colors.black),
-        ),
         child: CustomPaint(
           painter: DrawingPainter(
             points: points,
             isEraser: isEraser,
           ),
-          child: Container(),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(width: 2, color: Colors.black),
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget bottomBar(BuildContext context) {
-    return Container(
-      width: 240,
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(50),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          iconButton(
-            icon: Icons.how_to_vote_outlined,
-            isSelected: items[0],
-            onTap: () {
-              selectedItem(0);
-              setState(() {});
-            },
-          ),
-          const SizedBox(width: 20),
-          iconButton(
-              icon: Icons.colorize,
-              isSelected: items[1],
+    return Visibility(
+      visible: !isDrawing,
+      child: Container(
+        width: 240,
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.black26,
+          borderRadius: BorderRadius.circular(50),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            iconButton(
+              icon: Icons.how_to_vote_outlined,
+              isSelected: items[0],
               onTap: () {
-                selectedItem(1);
+                selectedItem(0);
                 setState(() {});
-              }),
-          const SizedBox(width: 20),
-          iconButton(
-            icon: Icons.draw,
-            isSelected: false,
-            onTap: () async {
-              final newStroke = await showBrushDialog(context);
-              if (newStroke != 0) {
-                stroke = newStroke;
-              }
-            },
-          ),
-          const SizedBox(width: 20),
-          iconButton(
-            icon: Icons.delete,
-            isSelected: false,
-            onTap: () {
-              points.clear();
-              setState(() {});
-            },
-          ),
-          const SizedBox(width: 20),
-          iconButton(
-            icon: Icons.palette,
-            isSelected: false,
-            onTap: () async {
-              final Color? newColor = await showColorPicker(context);
-              log(newColor.toString());
-              if (newColor != null) color = newColor;
+              },
+            ),
+            const SizedBox(width: 20),
+            iconButton(
+                icon: Icons.colorize,
+                isSelected: items[1],
+                onTap: () {
+                  selectedItem(1);
+                  setState(() {});
+                }),
+            const SizedBox(width: 20),
+            iconButton(
+              icon: Icons.draw,
+              isSelected: false,
+              onTap: () async {
+                final newStroke = await showBrushDialog(context);
+                if (newStroke != 0) {
+                  stroke = newStroke;
+                }
+              },
+            ),
+            const SizedBox(width: 20),
+            iconButton(
+              icon: Icons.delete,
+              isSelected: false,
+              onTap: () {
+                points.clear();
+                setState(() {});
+              },
+            ),
+            const SizedBox(width: 20),
+            iconButton(
+              icon: Icons.palette,
+              isSelected: false,
+              onTap: () async {
+                final Color? newColor = await showColorPicker(context);
+                log(newColor.toString());
+                if (newColor != null) color = newColor;
 
-              log(color.toString());
-            },
-          ),
-        ],
+                log(color.toString());
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
