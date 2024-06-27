@@ -84,7 +84,9 @@ Future<double> showBrushDialog(BuildContext context) async {
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
                   child: Container(
                     height: 40,
                     color: Colors.blue,

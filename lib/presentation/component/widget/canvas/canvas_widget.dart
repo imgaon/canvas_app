@@ -4,7 +4,11 @@ import 'package:canvas_app/domain/model/drawing_points_model.dart';
 import 'package:canvas_app/presentation/component/dialog/brush_width_dialog.dart';
 import 'package:canvas_app/presentation/component/dialog/color_picker_dialog.dart';
 import 'package:canvas_app/presentation/component/painter/drawing_painter.dart';
+import 'package:canvas_app/presentation/component/widget/eyedrop/eye_dropper_widget.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../core/utils/di.dart';
+import '../../../provider/home_provider.dart';
 
 class CanvasWidget extends StatefulWidget {
   const CanvasWidget({
@@ -22,6 +26,24 @@ class _CanvasWidgetState extends State<CanvasWidget> {
   double stroke = 5;
   Color color = Colors.black;
   bool isDrawing = false;
+  final eyeDropperController = di.get<EyeDropController>();
+
+  void updateScreen() => setState(() {
+        color = eyeDropperController.color;
+        items[1] = false;
+      });
+
+  @override
+  void initState() {
+    super.initState();
+    eyeDropperController.addListener(updateScreen);
+  }
+
+  @override
+  void dispose() {
+    eyeDropperController.removeListener(updateScreen);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +79,7 @@ class _CanvasWidgetState extends State<CanvasWidget> {
         points.add(DrawingPointsModel(points: Offset.zero, paint: Paint(), isPoint: false));
         setState(() {});
       },
-      child: Container(
+      child: SizedBox(
         width: MediaQuery.sizeOf(context).width,
         height: 500,
         child: CustomPaint(
@@ -99,12 +121,14 @@ class _CanvasWidgetState extends State<CanvasWidget> {
             ),
             const SizedBox(width: 20),
             iconButton(
-                icon: Icons.colorize,
-                isSelected: items[1],
-                onTap: () {
-                  selectedItem(1);
-                  setState(() {});
-                }),
+              icon: Icons.colorize,
+              isSelected: items[1],
+              onTap: () {
+                selectedItem(1);
+                eyeDropperController.useEyeDropper();
+                setState(() {});
+              },
+            ),
             const SizedBox(width: 20),
             iconButton(
               icon: Icons.draw,

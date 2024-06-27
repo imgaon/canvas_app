@@ -1,5 +1,6 @@
 import 'package:canvas_app/core/utils/di.dart';
-import 'package:canvas_app/presentation/component/widget/canvas_widget.dart';
+import 'package:canvas_app/presentation/component/widget/canvas/canvas_widget.dart';
+import 'package:canvas_app/presentation/component/widget/eyedrop/eye_dropper_widget.dart';
 import 'package:canvas_app/presentation/provider/home_provider.dart';
 import 'package:flutter/material.dart';
 
@@ -29,15 +30,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              CanvasWidget(),
-            ],
+    return EyeDrop(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              children: [
+                CanvasWidget(),
+              ],
+            ),
           ),
         ),
       ),
