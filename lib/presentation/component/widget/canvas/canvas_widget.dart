@@ -5,10 +5,11 @@ import 'package:canvas_app/presentation/component/dialog/brush_width_dialog.dart
 import 'package:canvas_app/presentation/component/dialog/color_picker_dialog.dart';
 import 'package:canvas_app/presentation/component/painter/drawing_painter.dart';
 import 'package:canvas_app/presentation/component/widget/eyedrop/eye_dropper_widget.dart';
+import 'package:canvas_app/presentation/provider/home_provider.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/di.dart';
-import '../../../provider/home_provider.dart';
+
 
 class CanvasWidget extends StatefulWidget {
   const CanvasWidget({
@@ -27,21 +28,26 @@ class _CanvasWidgetState extends State<CanvasWidget> {
   Color color = Colors.black;
   bool isDrawing = false;
   final eyeDropperController = di.get<EyeDropController>();
+  final homeProvider = di.get<HomeProvider>();
 
   void updateScreen() => setState(() {
         color = eyeDropperController.color;
         items[1] = false;
       });
 
+  void homeListen() => setState(() {});
+
   @override
   void initState() {
     super.initState();
     eyeDropperController.addListener(updateScreen);
+    homeProvider.addListener(homeListen);
   }
 
   @override
   void dispose() {
     eyeDropperController.removeListener(updateScreen);
+    homeProvider.removeListener(homeListen);
     super.dispose();
   }
 
@@ -60,7 +66,6 @@ class _CanvasWidgetState extends State<CanvasWidget> {
     return GestureDetector(
       onPanUpdate: (details) {
         isDrawing = true;
-
         points.add(DrawingPointsModel(
           points: details.localPosition,
           paint: Paint()
@@ -79,17 +84,27 @@ class _CanvasWidgetState extends State<CanvasWidget> {
         points.add(DrawingPointsModel(points: Offset.zero, paint: Paint(), isPoint: false));
         setState(() {});
       },
-      child: SizedBox(
-        width: MediaQuery.sizeOf(context).width,
-        height: 500,
-        child: CustomPaint(
-          painter: DrawingPainter(
-            points: points,
-            isEraser: isEraser,
+      child: RepaintBoundary(
+        key: homeProvider.globalKey,
+        child: Container(
+          width: MediaQuery.sizeOf(context).width,
+          height: 500,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            image: homeProvider.image != null ? DecorationImage(
+              image: FileImage(homeProvider.image!),
+              fit: BoxFit.cover,
+            ) : null,
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(width: 2, color: Colors.black),
+          child: CustomPaint(
+            painter: DrawingPainter(
+              points: points,
+              isEraser: isEraser,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(width: 2, color: Colors.black),
+              ),
             ),
           ),
         ),
@@ -146,6 +161,7 @@ class _CanvasWidgetState extends State<CanvasWidget> {
               isSelected: false,
               onTap: () {
                 points.clear();
+                homeProvider.image = null;
                 setState(() {});
               },
             ),

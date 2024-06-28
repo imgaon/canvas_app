@@ -1,40 +1,57 @@
+import 'dart:async';
+import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 class HomeProvider extends ChangeNotifier {
-  bool test = false;
-
+  File? image;
   GlobalKey globalKey = GlobalKey();
 
-  Future<ui.Image> capturePng() async {
-    RenderRepaintBoundary boundary = globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
-    ui.Image image = await boundary.toImage();
-    return image;
+  Future<void> pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      image = File(pickedFile.path);
+      // final Uint8List bytes = await pickedFile.readAsBytes();
+      // final Completer<ui.Image> completer = Completer();
+      // ui.decodeImageFromList(bytes, (ui.Image img) {
+      //   image = img;
+      //   completer.complete(img);
+      // });
+      // completer.future;
+    }
+    notifyListeners();
   }
 
-  Future<Color> getColorFromImage(ui.Image image, Offset position) async {
-    ByteData? data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-    if (data == null) return Colors.transparent;
+  Future<bool> saveCanvasImage() async {
+    try {
+      RenderRepaintBoundary boundary = globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3);
+      ByteData? data = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (data == null) throw Exception('ERROR');
+      Uint8List pngBytes = data.buffer.asUint8List();
 
-    int width = image.width;
-    int height = image.height;
+      Directory? downloadsDir = Directory('/storage/emulated/0/Download');
 
-    int x = position.dx.toInt();
-    int y = position.dy.toInt();
+      if (!downloadsDir.existsSync()) {
+        downloadsDir = await getExternalStorageDirectory();
+      }
 
-    if (x >= width || y >= height) {
-      return Colors.transparent;
+      String filePath = '${downloadsDir!.path}/${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')} ${DateTime.now().microsecond}.png';
+
+      File imgFile = File(filePath);
+      await imgFile.writeAsBytes(pngBytes);
+
+      return true;
+    } catch (e) {
+      log(e.toString());
+      return false;
     }
-
-    int byteOffset = (y * width + x) * 4;
-
-    int r = data.getUint8(byteOffset);
-    int g = data.getUint8(byteOffset + 1);
-    int b = data.getUint8(byteOffset + 2);
-    int a = data.getUint8(byteOffset + 3);
-
-    return Color.fromARGB(a, r, g, b);
   }
 }
